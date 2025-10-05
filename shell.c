@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 
 #define MAX_LINE 80  //the maximum length command
@@ -42,13 +41,32 @@ static void history_print(void){
 static const char* history_last(void){
   if (hist_count == 0)
     return NULL;
-  int pos = (hist_count - 1) % HIST_SIZE;
-  return hist[pos].cmd;
+  return hist[(hist_count - 1) % HIST_SIZE].cmd;
 }
 
 static int parse_to_args(char *line, char *args[MAX_ARGS]){
   int argc = 0;
-  char *tok = strtok(line, "\t\n");
+  char *tok = strtok(line, " \t\n");
+  while (tok && argc < MAX_ARGS - 1){
+    args[argc++] = tok;
+    tok = strtok(NULL, " \t\n");
+  }
+  argc[argc] = NULL;
+  if(argc == 0)
+    return 0;
+  int background = 0;
+  char *last = args[argc - 1];
+  size_t L = strlen(last);
+  if (strcmp(last, "&") == 0){
+    args[argc - 1] = NULL;
+    background = 1;
+  }
+  else if (L > 0 && last[L - 1] == '&'){
+    last[L - 1] = '\0';
+    if (last[0] == '\0') args[argc - 1] = NULL;
+    background = 1;
+  }
+  return background;
 }
 
 int main(void){
@@ -91,15 +109,6 @@ int main(void){
     if (argc > 0 && strcmp(args[0], "exit") == 0) {
       should_run = 0;
       continue;
-
-  }
-
-  //run parent in backgroun if '&' is in the end of command
-  int background = 0;
-  if (argc > 0 && strcmp(args[argc - 1], "&") == 0) {
-    background = 1;
-    //TODO 
-
 
   }
 
