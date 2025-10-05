@@ -31,6 +31,24 @@ static void history_add(const char *line) {
 static void history_print(void){
   if (hist_count == 0)
     return;
+  int n = hist_count < HIST_SIZE ? hist_count : HIST_SIZE;
+  for (int i = 0; i < n; ++i){
+    int pos = (hist_count - 1 - i) % HIST_SIZE;
+    if (pos < 0) pos += HIST_SIZE;
+    printf("%d %s\n", hist[pos].number, hist[pos].cmd);
+  }
+}
+
+static const char* history_last(void){
+  if (hist_count == 0)
+    return NULL;
+  int pos = (hist_count - 1) % HIST_SIZE;
+  return hist[pos].cmd;
+}
+
+static int parse_to_args(char *line, char *args[MAX_ARGS]){
+  int argc = 0;
+  char *tok = strtok(line, "\t\n");
 }
 
 int main(void){
