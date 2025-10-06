@@ -148,6 +148,8 @@ int main(void) {
       continue;
     }
 
+    history_add(input);
+
   }
   return 0;
 }
