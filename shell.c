@@ -74,6 +74,7 @@ int main(void) {
   char *args[MAX_LINE/2 + 1]; //command line arguments
   char line[MAX_LINE + 1];  //command line
   int should_run = 1; //flag to determine when to exit program
+  char input[MAX_LINE + 2];
 
   while (should_run) {
     printf("osh>");
@@ -124,6 +125,13 @@ int main(void) {
 
     }
 
+    if (strcmp(args[0], "history") == 0){  //history
+      if (hist_count) history_print();
+      continue;
+    }
+
+    history_add(input);
+    
     //Fork child process
     pid_t pid = fork();
     //child process
@@ -142,16 +150,6 @@ int main(void) {
       //fork failed
       perror("Fork failed");
     }
-
-    char input[MAX_LINE + 2];
-
-    if (strcmp(args[0], "history") == 0){  //history
-      if (hist_count) history_print();
-      continue;
-    }
-
-    history_add(input);
-
   }
   return 0;
 }
