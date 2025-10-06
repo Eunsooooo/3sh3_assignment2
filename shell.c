@@ -143,6 +143,11 @@ int main(void) {
       perror("Fork failed");
     }
 
+    if (strcmp(args[0], "history") == 0){  //history
+      if (hist_count) history_print();
+      continue;
+    }
+
   }
   return 0;
 }
