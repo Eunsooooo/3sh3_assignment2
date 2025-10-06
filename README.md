@@ -8,9 +8,9 @@ This program works like a very basic shell. It lets the user type commands and r
 **Contributions**
 
 Eunsu Kim:
-- 
--
--
+- Implemented command parsing, background execution using &, and the history feature that stores up to five recent commands.
+- Added the history and !! commands to view and rerun previous inputs.
+- A brief explanation of the code is also included in this README file.
 
 
 Momina Hassan: 
