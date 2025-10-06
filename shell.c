@@ -95,6 +95,7 @@ int main(void) {
       history_print(); continue; 
     }
 
+    //CHANGED THIS PART
     if (strcmp(input, "!!") == 0) {
       const char *last = history_last();
       if (!last) { printf("No commands in history.\n"); continue; }
