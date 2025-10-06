@@ -70,91 +70,65 @@ static int parse_to_args(char *line, char *args[MAX_ARGS]){
 }
 
 int main(void) {
-
-  char *args[MAX_LINE/2 + 1]; //command line arguments
-  char line[MAX_LINE + 1];  //command line
-  int should_run = 1; //flag to determine when to exit program
+  char *args[MAX_ARGS];          // use MAX_ARGS
+  char line[MAX_LINE + 1];
+  char input[MAX_LINE + 1];      // pristine copy for history
+  int should_run = 1;
 
   while (should_run) {
     printf("osh>");
     fflush(stdout);
 
-    //read the line
-    //Exit on EOF (ctrl D) or read error
-    if (fgets(line, sizeof(line), stdin) == NULL) {
-      putchar('\n');
-      break; 
-    }
+    if (fgets(line, sizeof(line), stdin) == NULL) { putchar('\n'); break; }
 
-    //Strip trailing newline
+    // strip newline
     size_t len = strlen(line);
-    if(len > 0 && line[len - 1] == '\n') line[len - 1] = '\0';
-
-    //Empty input
+    if (len > 0 && line[len - 1] == '\n') line[len - 1] = '\0';
     if (line[0] == '\0') continue;
 
-    char plain[MAX_LINE + 1];
-    strncpy(plain, line, MAX_LINE);
-    plain[MAX_LINE] = '\0';
+    // keep an original copy before tokenizing
+    strncpy(input, line, MAX_LINE);
+    input[MAX_LINE] = '\0';
 
-    //Tokenize the input into args array
-    int argc = 0;
-    char *token = strtok(line, " \t");
-    while (token && argc < (int)(MAX_LINE/2)) {
-      args[argc++] = token;
-      token = strtok(NULL, " \t");
-    } 
-    //NULL terminate the args array
-    args[argc] = NULL; 
-    if (argc == 0) continue; 
+    // built-ins that should not be stored
+    if (strcmp(input, "history") == 0) { 
+      history_print(); continue; 
+    }
 
+    if (strcmp(args[0], "!!") == 0) {
+      const char *last = history_last();
+      if (!last) { printf("No commands in history.\n"); continue; }
+      printf("%s\n", last);
 
-    //Built in exit command
+      char execbuf[MAX_LINE + 1];
+      strncpy(execbuf, last, MAX_LINE);
+      execbuf[MAX_LINE] = '\0';
+      char *eargs[MAX_ARGS];
+      int bg = parse_to_args(execbuf, eargs);
+
+      pid_t pid = fork();
+      if (pid < 0) { perror("fork"); continue; }
+      if (pid == 0) { execvp(eargs[0], eargs); perror("execvp"); _exit(1); }
+      if (!bg) waitpid(pid, NULL, 0);
+
+      history_add(last);
+      continue;
+    }
+
+    char execbuf[MAX_LINE + 1];
+    strncpy(execbuf, input, MAX_LINE);
+    execbuf[MAX_LINE] = '\0';
+      
+    int background = parse_to_args(execbuf, args);
+    if (!args[0]) continue;
+
+    // built-in exit
     if (strcmp(args[0], "exit") == 0) {
       should_run = 0;
       continue;
     }
+    history_add(input);  // store only real commands
 
-    //Running parent in background if last arg '&'
-    int background = 0;
-    if (argc > 0 && strcmp(args[argc - 1], "&") == 0) {
-      background = 1;
-      
-      //remove '&' from args
-      args[argc - 1] = NULL;  
-      argc--;
-      if (argc == 0) continue;
-
-    }
-
-    // history
-    if (strcmp(args[0], "history") == 0){  //history
-      if (hist_count) history_print();
-      continue;
-    }
-
-    // !!
-    if (strcmp(args[0], "!!") == 0) {
-            const char *last = history_last();
-            if (!last) { printf("No commands in history.\n"); continue; }
-            printf("%s\n", last);
-
-            char execbuf[MAX_LINE + 1];
-            strncpy(execbuf, last, MAX_LINE);
-            execbuf[MAX_LINE] = '\0';
-            char *eargs[MAX_ARGS];
-            int bg = parse_to_args(execbuf, eargs);
-
-            pid_t pid = fork();
-            if (pid < 0) { perror("fork"); continue; }
-            if (pid == 0) { execvp(eargs[0], eargs); perror("execvp"); _exit(1); }
-            if (!bg) waitpid(pid, NULL, 0);
-            history_add(last);
-            continue;
-        }
-
-    history_add(plain);
-    
     //Fork child process
     pid_t pid = fork();
     //child process
