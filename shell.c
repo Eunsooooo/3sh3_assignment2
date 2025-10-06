@@ -8,18 +8,22 @@
 #define MAX_ARGS (MAX_LINE/2 + 1) //max tokens
 #define HIST_SIZE 5
 
+// Define a structure to store a single command in history
 typedef struct {
   int number;
   char cmd[MAX_LINE + 1];
 } HistEntry;
 
+// Array to hold up to HIST_SIZE history entries
 static HistEntry hist[HIST_SIZE];
 static int hist_count = 0;
-static int next_number = 1;
+static int next_number = 1;    // The next command number to assign
 
+// Add a new command to the history
 static void history_add(const char *line) {
-  if(!line || !*line)
+  if(!line || !*line)    // Ignore empty input
     return;
+  // Store the new command in a circular buffer
   HistEntry *slot = &hist[hist_count % HIST_SIZE];
   slot->number = next_number++;
   strncpy(slot->cmd, line, MAX_LINE);
@@ -27,9 +31,11 @@ static void history_add(const char *line) {
   hist_count++;
 }
 
+// Print the history list
 static void history_print(void){
   if (hist_count == 0)
     return;
+  // Determine how many commands to print
   int n = hist_count < HIST_SIZE ? hist_count : HIST_SIZE;
   for (int i = 0; i < n; ++i){
     int pos = (hist_count - 1 - i) % HIST_SIZE;
@@ -38,12 +44,15 @@ static void history_print(void){
   }
 }
 
+// Return the most recent command from history
 static const char* history_last(void){
   if (hist_count == 0)
     return NULL;
   return hist[(hist_count - 1) % HIST_SIZE].cmd;
 }
 
+// Parse the input line into tokens
+// Returns 1 if command should run in &, otherwise 0
 static int parse_to_args(char *line, char *args[MAX_ARGS]){
   int argc = 0;
   char *tok = strtok(line, " \t\n");
@@ -55,12 +64,15 @@ static int parse_to_args(char *line, char *args[MAX_ARGS]){
   if(argc == 0)
     return 0;
   int background = 0;
-  char *last = args[argc - 1];
+  char *last = args[argc - 1];    // Check the last argument
   size_t L = strlen(last);
+  
+  // Last argument is exactly &
   if (strcmp(last, "&") == 0){
     args[argc - 1] = NULL;
     background = 1;
   }
+  // Last argument ends with &
   else if (L > 0 && last[L - 1] == '&'){
     last[L - 1] = '\0';
     if (last[0] == '\0') args[argc - 1] = NULL;
