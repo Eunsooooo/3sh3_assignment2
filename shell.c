@@ -143,6 +143,8 @@ int main(void) {
       perror("Fork failed");
     }
 
+    char input[MAX_LINE + 2];
+
     if (strcmp(args[0], "history") == 0){  //history
       if (hist_count) history_print();
       continue;
