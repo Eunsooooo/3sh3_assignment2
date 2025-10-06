@@ -1,5 +1,4 @@
 **3SH3 Assignment 2**
-- test commit
 
 Group Members: Eunsu Kim, Momina Hassan
 
