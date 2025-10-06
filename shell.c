@@ -69,7 +69,7 @@ static int parse_to_args(char *line, char *args[MAX_ARGS]){
   return background;
 }
 
-int main(void){
+int main(void) {
 
   char *args[MAX_LINE/2 + 1]; //command line arguments
   char line[MAX_LINE + 1];  //command line
@@ -80,57 +80,69 @@ int main(void){
     fflush(stdout);
 
     //read the line
+    //Exit on EOF (ctrl D) or read error
     if (fgets(line, sizeof(line), stdin) == NULL) {
       putchar('\n');
-      break; // Exit on EOF (ctrl D) or read error
+      break; 
     }
 
-    //strip trailing newline
+    //Strip trailing newline
     size_t len = strlen(line);
-    if(len > 0 && line[len - 1] == '\n') {
-      line[len - 1] = '\0';
-    }
+    if(len > 0 && line[len - 1] == '\n') line[len - 1] = '\0';
 
-    //skip empty inputs
-    if (line[0] == '\0') {
-      continue;
-    }
+    //Empty input
+    if (line[0] == '\0') continue;
       
-    //tokenize the input line
+
+    //Tokenize the input into args array
     int argc = 0;
     char *token = strtok(line, " \t");
     while (token && argc < (int)(MAX_LINE/2)) {
       args[argc++] = token;
       token = strtok(NULL, " \t");
     } 
-    args[argc] = NULL; //null-terminate the args array
+    //NULL terminate the args array
+    args[argc] = NULL; 
+    if (argc == 0) continue; 
 
-    //built in command: exit
-    if (argc > 0 && strcmp(args[0], "exit") == 0) {
+
+    //Built in exit command
+    if (strcmp(args[0], "exit") == 0) {
       should_run = 0;
       continue;
+    }
+
+    //Running parent in background if last arg '&'
+    int background = 0;
+    if (argc > 0 && strcmp(args[argc - 1], "&") == 0) {
+      background = 1;
+      
+      //remove '&' from args
+      args[argc - 1] = NULL;  
+      argc--;
+      if (argc == 0) continue;
+
+    }
+
+    //Fork child process
+    pid_t pid = fork();
+    //child process
+    if (pid == 0) {
+      // (2) child process will envoke execvp to run the command
+      execvp(args[0], args);
+      //error handling, child process exits if execvp fails
+      perror("Execution failed");
+      _exit(127); 
+    } else if (pid > 0) {
+      // (3) parent process will envoke wait unless the command included '&'
+      if (!background) {
+        waitpid(pid, NULL, 0); 
+      }   
+    } else {
+      //fork failed
+      perror("Fork failed");
+    }
 
   }
-
-  //fork child process
-  pid_t pid = fork();
-  if (pid < 0) {
-    perror("Fork failed");
-    continue;
-  }
-
-  //child process
-  if (pid == 0) {
-    // (2) child process will envoke execvp to run the command
-
-    //parent will envoke wait unless the command included '&'
-
-    //reap any background children that have finsished
-
-  }
-  
-
-
-
   return 0;
 }
