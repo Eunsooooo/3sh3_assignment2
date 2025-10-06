@@ -3,7 +3,7 @@
 
 Group Members: Eunsu Kim, Momina Hassan
 
-
+This program works like a very basic shell. It lets the user type commands and runs them using fork() and execvp(). It can also run commands in the background with &, and it keeps the last five commands in a small history. The user can check past commands with history or repeat the most recent one by typing !!.
 
 **Contributions**
 
