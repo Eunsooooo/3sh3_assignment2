@@ -51,7 +51,7 @@ static int parse_to_args(char *line, char *args[MAX_ARGS]){
     args[argc++] = tok;
     tok = strtok(NULL, " \t\n");
   }
-  argc[argc] = NULL;
+  args[argc] = NULL;
   if(argc == 0)
     return 0;
   int background = 0;
