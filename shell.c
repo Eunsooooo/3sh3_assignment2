@@ -125,10 +125,31 @@ int main(void) {
 
     }
 
+    // history
     if (strcmp(args[0], "history") == 0){  //history
       if (hist_count) history_print();
       continue;
     }
+
+    // !!
+    if (strcmp(args[0], "!!") == 0) {
+            const char *last = history_last();
+            if (!last) { printf("No commands in history.\n"); continue; }
+            printf("%s\n", last);
+
+            char execbuf[MAX_LINE + 1];
+            strncpy(execbuf, last, MAX_LINE);
+            execbuf[MAX_LINE] = '\0';
+            char *eargs[MAX_ARGS];
+            int bg = parse_to_args(execbuf, eargs);
+
+            pid_t pid = fork();
+            if (pid < 0) { perror("fork"); continue; }
+            if (pid == 0) { execvp(eargs[0], eargs); perror("execvp"); _exit(1); }
+            if (!bg) waitpid(pid, NULL, 0);
+            history_add(last);
+            continue;
+        }
 
     history_add(input);
     
