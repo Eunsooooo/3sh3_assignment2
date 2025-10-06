@@ -74,7 +74,6 @@ int main(void) {
   char *args[MAX_LINE/2 + 1]; //command line arguments
   char line[MAX_LINE + 1];  //command line
   int should_run = 1; //flag to determine when to exit program
-  char input[MAX_LINE + 2];
 
   while (should_run) {
     printf("osh>");
@@ -93,7 +92,10 @@ int main(void) {
 
     //Empty input
     if (line[0] == '\0') continue;
-      
+
+    char plain[MAX_LINE + 1];
+    strncpy(plain, line, MAX_LINE);
+    plain[MAX_LINE] = '\0';
 
     //Tokenize the input into args array
     int argc = 0;
@@ -151,7 +153,7 @@ int main(void) {
             continue;
         }
 
-    history_add(input);
+    history_add(plain);
     
     //Fork child process
     pid_t pid = fork();
